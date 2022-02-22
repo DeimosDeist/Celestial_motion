@@ -101,7 +101,7 @@ class MassSystem:
                     matrix[i][j] = G*self.points[i].mass*self.points[j].mass*(self.points[i].position-self.points[j].position)/abs_value(self.points[i].position-self.points[j].position)**3
         return matrix
 
-    def equation_of_motion(self, point, velocity, position):
+    def equation_of_motion(self, point, velocity):
         """
         Returns the equation of motion for the point
 
@@ -112,11 +112,11 @@ class MassSystem:
         position: (np.array)         Array containing the positions
         """
 
-        dv = self.new_dv(point, position)
+        dv = self.new_dv(point)
         dx = velocity[point, :]
         return dv, dx
 
-    def new_dv(self, point, position):
+    def new_dv(self, point):
         """
         Calculates the new dv with the spring matrix for point "point"
 
@@ -124,9 +124,14 @@ class MassSystem:
             point : (MassPoint)
             position: (np.array)
         """
+        F = self.getforces()
+        dv = 0
         for i in range(len(self.points)):
-            if i != point:
-                dv = dv + self.points[point].acceleration(position[point, :], position[i, :])
+            for j in range(len(self.points)):
+                if i == j:
+                    pass
+                print(F[i][j])
+                dv = dv + np.divide(F[i][:], point.mass)
         return dv
 
     def change(self):
