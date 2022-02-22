@@ -1,79 +1,57 @@
 import numpy as np
 
+def potential(point1, point2):
+    dv = 1/(np.absolute(point1-point2))
+
+G = 10
+
+def abs_value(vector):
+    """
+    Calculates the length of a vector
+
+    Args:
+        vector  (np.array)      Vector to get the length from the
+
+    Returns:
+        Length  (float)     Length of the Vector
+    """
+    return np.sqrt(np.sum(np.square(vector)))
+
 class MassPoint:
     """
-    Masspoint is a point with a mass that is fixed to a spring.
-    """
 
-    def __init__(self, mass, position, velocity):
+    """
+    def __init__(self, position: np.array, mass: float):
         """
-        Construct a MassPoint
+        Initializes a MassPoint with a position and a mass of
 
         Attr:
-        self._mass = Mass of the MassPoint
-        self._position(np.array) = Position of the MassPoint
-        self._velocity(np.array) = Velocity of the MassPoint
+        position (np.array): Position of the MassPoints
+        mass (float): mass of the MassPoint/Planet
         """
-        self._mass = mass
-        self._position = position
-        self._velocity = velocity
+        self.__position = position
+        self.__mass = mass
 
-    def __str__(self):
-        return str(self._mass + " at " + self._position + " with speed " + self._velocity)
-
-    # setters and getters for MassPoint
-
-    @property
-    def mass(self):
-        return self._mass
-
-    @mass.setter
-    def mass(self, value):
-        self._mass = value
 
     @property
     def position(self):
-        return self._position
+        return self.__position
 
     @position.setter
-    def position(self, value):
-        self._position = value
+    def position(self, value: np.array):
+        self.__position = value
 
     @property
-    def velocity(self):
-        return self._velocity
-
-    @velocity.setter
-    def velocity(self, value):
-        self._velocity = value
-
-    def acceleration(self, spring, position0, position1):
-        """
-        gives acceleration for 1 point at 1 spring
-        Args:
-            spring      (Spring)    Spring for which to calculate the effect on the mass point
-            position0   (np.arrays)    Position of the spring
-            position1   (np.arrays)    Position of the spring
-
-        Returns:
-        dv (np.array): acceleration
-        """
-        if abs_value(position0 - position1) == 0:
-            dv = 0
-        else:
-            dv = spring.stiffness * (abs_value(position0 - position1) - spring.rest_length) / self.mass * (
-                    position1 - position0) / (abs_value(position0 - position1))
-        return dv
+    def mass(self):
+        return self.__mass
 
 
-class SpringMassSystem:
+class MassSystem:
     """
     sets up a SpringMassSystem to be calculated and animated. Springs, Tethers and Masses need to be created beforehand!
-
-
     """
 
-    def __init__(self, points, k_matrix, time_step=.001, gravity=np.array([0, g])):
+    def __init__(self, points, time_step=.001):
         """
         Initializes a SpringMassSystem that will be calculated
         Arguments:
@@ -94,48 +72,34 @@ class SpringMassSystem:
 
         """
         self._points = points
-        self._gravity = gravity
         self._time_step = time_step
-
-        # finds the count of springs (relevant later)
-        self.spring_count = 0
-        for i in range(k_matrix.shape[0]):
-            for j in range(k_matrix.shape[1]):
-                if k_matrix[i, j] != 0:
-                    self.spring_count += 1
-        self.spring_count = self.spring_count / 2
-
-        self.spring_matrix = [['null' for j in range(len(self.points))] for i in range(
-            len(self.points))]  # make a matrix filled with springs where i,j indicate connection
-        for i in range(len(self.points)):
-            for j in range(len(self.points)):
-                # springlength vielleicht nicht allgemein, für einfache sollte es pasen
-                springlength = abs_value(self.points[i].position - self.points[j].position)
-                self.spring_matrix[i][j] = Spring(k_matrix[i][j], springlength)
-        self.spring_matrix = np.array(self.spring_matrix)
 
     def __str__(self):
         """
         A nice text representation of the SpringMassSystem
         """
         return (
-            f"This systems points {self.points} are connected with {self.springs} and the gravity is {self.gravity}")
-
-    @property
-    def gravity(self):
-        return self._gravity
+            f"We are looking at the planets {self.points}")
 
     @property
     def time_step(self):
         return self._time_step
 
     @property
-    def springs(self):
-        return self.spring_matrix
-
-    @property
     def points(self):
         return self._points
+
+    def getforces(self):
+        global G
+        matrix = [['null' for j in range(len(self.points))] for i in range(len(self.points))]
+        for i in range(len(self.points)):
+            for j in range(len(self.points)):
+                if i == j:
+                    matrix[i][j] = np.array([0,0])
+                    pass
+                if not i == j:
+                    matrix[i][j] = G*self.points[i].mass*self.points[j].mass*(self.points[i].position-self.points[j].position)/abs_value(self.points[i].position-self.points[j].position)**3
+        return matrix
 
     def equation_of_motion(self, point, velocity, position):
         """
@@ -160,11 +124,9 @@ class SpringMassSystem:
             point : (MassPoint)
             position: (np.array)
         """
-        dv = self.gravity
         for i in range(len(self.points)):
             if i != point:
-                dv = dv + self.points[point].acceleration(self.spring_matrix[point, i], position[point, :],
-                                                          position[i, :])
+                dv = dv + self.points[point].acceleration(position[point, :], position[i, :])
         return dv
 
     def change(self):
