@@ -1,9 +1,12 @@
 import numpy as np
 
+
 def potential(point1, point2):
-    dv = 1/(np.absolute(point1-point2))
+    dv = 1 / (np.absolute(point1 - point2))
+
 
 G = 10
+
 
 def abs_value(vector):
     """
@@ -17,10 +20,12 @@ def abs_value(vector):
     """
     return np.sqrt(np.sum(np.square(vector)))
 
+
 class MassPoint:
     """
 
     """
+
     def __init__(self, position: np.array, mass: float):
         """
         Initializes a MassPoint with a position and a mass of
@@ -31,7 +36,6 @@ class MassPoint:
         """
         self.__position = position
         self.__mass = mass
-
 
     @property
     def position(self):
@@ -95,10 +99,12 @@ class MassSystem:
         for i in range(len(self.points)):
             for j in range(len(self.points)):
                 if i == j:
-                    matrix[i][j] = np.array([0,0])
+                    matrix[i][j] = np.array([0, 0])
                     pass
                 if not i == j:
-                    matrix[i][j] = G*self.points[i].mass*self.points[j].mass*(self.points[i].position-self.points[j].position)/abs_value(self.points[i].position-self.points[j].position)**3
+                    matrix[i][j] = G * self.points[i].mass * self.points[j].mass * (
+                                self.points[i].position - self.points[j].position) / abs_value(
+                        self.points[i].position - self.points[j].position) ** 3
         return matrix
 
     def equation_of_motion(self, point, velocity):
@@ -203,7 +209,7 @@ class MassSystem:
         for i in range(len(self.points)):
             v_squared = abs_value(velocity_matrix[:, step, i]) ** 2
             energy_mass_at_step = energy_mass_at_step + self.points[i].mass * -self.gravity[1] * (
-            result_matrix[1, step, i]) + 0.5 * self.points[i].mass * v_squared
+                result_matrix[1, step, i]) + 0.5 * self.points[i].mass * v_squared
 
         for i in range(self.spring_matrix.shape[0]):
             for j in range(self.spring_matrix.shape[1]):
