@@ -26,7 +26,7 @@ class MassPoint:
 
     """
 
-    def __init__(self, position: np.array, mass: float):
+    def __init__(self, position: np.array, mass: float, velocity=np.array([0, 0])):
         """
         Initializes a MassPoint with a position and a mass of
 
@@ -36,6 +36,7 @@ class MassPoint:
         """
         self.__position = position
         self.__mass = mass
+        self.__velocity = velocity
 
     @property
     def position(self):
@@ -48,6 +49,14 @@ class MassPoint:
     @property
     def mass(self):
         return self.__mass
+
+    @property
+    def velocity(self):
+        return self.__velocity
+
+    @velocity.setter
+    def velocity(self, value):
+        self.__velocity = value
 
 
 class MassSystem:
@@ -93,7 +102,15 @@ class MassSystem:
     def points(self):
         return self._points
 
-    def getforces(self):
+    def getforces(self) -> np.array:
+        """
+         This will get the Forces towards all other points. The first index is the maspoint for which the Forces are. Example:
+
+         For a system with points a,b,c getforce()[0] will get you the Forces from b and c towards all
+
+         Returns:
+             Forces (np.array):     Forces for all the points
+        """
         global G
         matrix = [['null' for j in range(len(self.points))] for i in range(len(self.points))]
         for i in range(len(self.points)):
@@ -103,11 +120,15 @@ class MassSystem:
                     pass
                 if not i == j:
                     matrix[i][j] = G * self.points[i].mass * self.points[j].mass * (
-                                self.points[i].position - self.points[j].position) / abs_value(
+                            self.points[i].position - self.points[j].position) / abs_value(
                         self.points[i].position - self.points[j].position) ** 3
+        d = 0
+        for i in matrix:
+            matrix[d] = np.divide(matrix[d], self.points[d].mass)
+            d += 1
         return matrix
 
-    def equation_of_motion(self, point, velocity):
+    def equation_of_motion(self, point):
         """
         Returns the equation of motion for the point
 
@@ -119,7 +140,7 @@ class MassSystem:
         """
 
         dv = self.new_dv(point)
-        dx = velocity[point, :]
+        dx = point.velocity
         return dv, dx
 
     def new_dv(self, point):
@@ -131,13 +152,9 @@ class MassSystem:
             position: (np.array)
         """
         F = self.getforces()
-        dv = 0
-        for i in range(len(self.points)):
-            for j in range(len(self.points)):
-                if i == j:
-                    pass
-                print(F[i][j])
-                dv = dv + np.divide(F[i][:], point.mass)
+        dv = point.velocity
+        for i in F[np.where(self.points == point)[0][0]]:
+            dv = dv + i
         return dv
 
     def change(self):
